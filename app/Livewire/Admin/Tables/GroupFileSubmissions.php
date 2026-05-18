@@ -90,7 +90,7 @@ class GroupFileSubmissions extends Component implements Tables\Contracts\HasTabl
                 ->color('success')
                 ->action(fn (FileSubmission $record) => Storage::disk('local')->download($record->file_path, $record->original_name)),
 
-            Actions\EditAction::make('approve')
+            Actions\Action::make('approve')
                 ->label('Duyệt')
                 ->icon('heroicon-o-check')
                 ->color('success')
@@ -107,7 +107,7 @@ class GroupFileSubmissions extends Component implements Tables\Contracts\HasTabl
                     ]);
                 }),
 
-            Actions\EditAction::make('reject')
+            Actions\Action::make('reject')
                 ->label('Từ chối')
                 ->icon('heroicon-o-x-mark')
                 ->color('danger')
