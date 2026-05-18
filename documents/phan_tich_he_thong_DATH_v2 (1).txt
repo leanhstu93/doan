@@ -1,0 +1,400 @@
+TÀI LIỆU PHÂN TÍCH HỆ THỐNG
+Hệ thống Quản lý Đồ án Tốt nghiệp
+(Graduation Thesis Management System)
+Phiên bản: 1.0
+Ngày cập nhật: Tháng 4/2026
+Công nghệ: Laravel (PHP), MySQL
+ 
+1. TỔNG QUAN DỰ ÁN	1
+1.1 Mục tiêu	1
+1.2 Phạm vi hệ thống	1
+1.3 Dữ liệu thực tế hiện có	1
+2. ACTOR VÀ PHÂN QUYỀN	1
+2.1 Danh sách Actor	1
+2.2 Ma trận phân quyền chi tiết	1
+3. THIẾT KẾ CƠ SỞ DỮ LIỆU	1
+3.1 Sơ đồ bảng (Danh sách bảng)	1
+3.2 Chi tiết các bảng chính	1
+Bảng users	1
+Bảng students	1
+Bảng thesis_topics	1
+Bảng file_submissions	1
+4. USE CASE CHI TIẾT	1
+4.1 Module Admin	1
+UC-A01: Import danh sách sinh viên (Mẫu 1)	1
+UC-A02: Import danh sách đề tài do SV đã đăng ký (Mẫu 2)	1
+UC-A03: Xem báo cáo & Xuất dữ liệu	1
+UC-A04: Duyệt file sinh viên	1
+4.2 Module Giảng viên (GVHD / GVPB)	1
+4.3 Module Sinh viên	1
+5. QUY TRÌNH NỘP FILE & DUYỆT CHI TIẾT	1
+5.1 Ba giai đoạn nộp file	1
+5.2 Trạng thái file	1
+6. CẤU TRÚC CÁC MẪU EXCEL	1
+6.1 Mẫu 1 — Import danh sách sinh viên	1
+6.2 Mẫu 2 — Import đề tài do SV đăng ký / Xuất danh sách đăng ký	1
+6.3 Mẫu 3 — Báo cáo có / chưa có đề tài	1
+6.4 Mẫu 4 — Xuất về Phòng Đào Tạo	1
+7. CẤU TRÚC DỰ ÁN LARAVEL	1
+7.1 Các Route chính	1
+7.2 Cấu trúc thư mục	1
+8. YÊU CẦU PHI CHỨC NĂNG & LƯU Ý	1
+8.1 Bảo mật	1
+8.2 Hiệu năng & Khả năng mở rộng	1
+8.3 Ghi chú triển khai	1
+8.4 Thứ tự ưu tiên phát triển	1
+
+ 
+1. TỔNG QUAN DỰ ÁN
+1.1 Mục tiêu
+Xây dựng hệ thống web quản lý toàn bộ quy trình Đồ án Tốt nghiệp (ĐATN) thay thế việc quản lý thủ công bằng file Excel/Google Sheets hiện tại. Hệ thống hỗ trợ 3 nhóm người dùng: Admin, Giảng viên hướng dẫn (GVHD), và Sinh viên.
+ 
+1.2 Phạm vi hệ thống
+Khía cạnh	Mô tả
+Đối tượng	Admin (PĐT), Giảng viên hướng dẫn, Sinh viên
+Phạm vi	Quản lý từ đầu kỳ đến khi hoàn tất bảo vệ ĐATN
+Khóa học	Hỗ trợ đa khóa: K2024, K2025, K2026,...
+Công nghệ	Laravel (PHP), MySQL, giao diện web responsive
+File hỗ trợ	Import/Export Excel (.xlsx), nộp Word/PPT/PDF
+ 
+1.3 Dữ liệu thực tế hiện có
+Dựa trên dữ liệu hiện có trong hệ thống:
+•	DANHSACHLOP.xlsx: Danh sách sinh viên đăng ký môn học (IE400.F2.CN2.CNTT) — tổng ~74 sinh viên
+•	DANHSACHDETAI.xlsx: Danh sách 74 đề tài đã đăng ký, bao gồm nhóm (2 SV) và cá nhân
+•	Dữ liệu mẫu gồm 2 nhóm khóa: 242xxxxx (K2024) và 254xxxxx (K2025)
+ 
+2. ACTOR VÀ PHÂN QUYỀN
+2.1 Danh sách Actor
+Actor	Tên đầy đủ	Mô tả
+Admin	Quản trị viên / Phòng Đào Tạo	Quản lý toàn bộ hệ thống: SV, đề tài, giảng viên, duyệt file, xuất báo cáo
+GVHD	Giảng viên Hướng dẫn	Duyệt file cuối kỳ, nhập nhận xét đánh giá cho nhóm mình phụ trách
+GVPB	Giảng viên Phản biện (Cán bộ phản biện)	Nhập nhận xét phản biện (xem qua tài khoản GVHD hoặc module riêng)
+SV
+Sinh viên	Đăng nhập bằng MSSV, tự nhập đề tài trên hệ thống, nộp file theo 3 giai đoạn. Bước cuối hoàn thiện cập nhật thêm sản phẩm ngoài 3 file W,PP,PDF 
+ 
+2.2 Ma trận phân quyền chi tiết
+Chức năng	Admin	GVHD	GVPB	Sinh viên
+Nhập / Import danh sách SV	✔
+✘
+✘
+✘
+
+Tạo tài khoản SV từ Mẫu 1	✔
+✘
+✘
+✘
+
+Xem danh sách toàn bộ SV	✔
+✘
+✘
+✘
+
+Import danh sách đề tài (Mẫu 2)	✔
+✘
+✘
+✘
+
+Sửa tên đề tài (khi SV nhập sai)	✔
+✘
+✘
+✘
+
+Xem thông tin đề tài nhóm mình	✔
+✔
+✔
+✔
+
+Nộp file (Đầu kỳ / Giữa kỳ / Cuối kỳ)	✘
+✘
+✘
+✔
+
+Duyệt file Đầu kỳ / Giữa kỳ	✔
+✘
+✘
+✘
+
+Duyệt file Cuối kỳ	✔
+✔
+✘
+✘
+
+Tạo tài khoản / cấp quyền GV	✔
+✘
+✘
+✘
+
+Gán GVHD / GVPB cho nhóm	✔
+✘
+✘
+✘
+
+Xem nhóm của GV khác	✔
+✘
+✘
+✘
+
+Nhập nhận xét GVPB	✘
+✘
+✔
+✘
+
+Xem báo cáo có/chưa đề tài (Mẫu 3)	✔
+✘
+✘
+✘
+
+Xuất Excel về PĐT (Mẫu 4)	✔
+✘
+✘
+✘
+
+Quản lý đa khóa học (K2024, K2025...)	✔
+✘
+✘
+✘
+
+ 
+3. THIẾT KẾ CƠ SỞ DỮ LIỆU
+3.1 Sơ đồ bảng (Danh sách bảng)
+Tên bảng	Tên hiển thị	Mô tả
+users	Người dùng	Tài khoản của tất cả Actor (Admin, GV, SV) — phân biệt bằng role
+academic_years	Năm học / Khóa	Quản lý theo từng khóa: K2024, K2025... và học kỳ
+classes	Lớp / Mã lớp	VD: IE400.F2.CN2.CNTT — gắn với academic_year
+students	Sinh viên	Thông tin SV: MSSV, Họ, Tên, lớp, tài khoản — import từ Mẫu 1
+lecturers	Giảng viên	Thông tin GVHD và GVPB: tên, học hàm/học vị, tài khoản
+thesis_topics	Đề tài	Tên đề tài TV + TA, trạng thái, gắn với nhóm SV và GVHD
+thesis_groups	Nhóm SV	1 hoặc 2 SV / nhóm, gắn với đề tài và GVHD, GVPB
+thesis_group_members	Thành viên nhóm	Bảng trung gian: nhóm — sinh viên (pivot)
+submission_phases	Giai đoạn nộp	3 giai đoạn: đầu kỳ, giữa kỳ, cuối kỳ — cấu hình thời gian mở/đóng
+file_submissions	File nộp	File SV nộp: loại file, đường dẫn, giai đoạn, trạng thái duyệt
+reviews	Nhận xét / Duyệt	Nhận xét của GVHD và CBPB gắn với từng nhóm
+defense_committees	Hội đồng bảo vệ	(Làm sau) Danh sách hội đồng, lịch bảo vệ
+ 
+3.2 Chi tiết các bảng chính
+Bảng users
+Cột	Kiểu dữ liệu	Ràng buộc	Ghi chú
+id	bigint unsigned	PK, AUTO_INC	
+username	varchar(50)	UNIQUE, NOT NULL	MSSV cho SV, mã GV cho giảng viên
+password	varchar(255)	NOT NULL	Bcrypt hash
+role	enum	NOT NULL	admin | gvhd | gvpb | student
+full_name	varchar(100)	NOT NULL	Họ tên đầy đủ
+email	varchar(100)	UNIQUE, NULL	
+is_active	tinyint(1)	DEFAULT 1	1 = hoạt động, 0 = khoá
+created_at / updated_at	timestamp		Laravel timestamps
+ 
+Bảng students
+Cột	Kiểu dữ liệu	Ràng buộc	Ghi chú
+id	bigint unsigned	PK	
+user_id	bigint unsigned	FK → users.id
+Liên kết tài khoản
+mssv	varchar(20)	UNIQUE, NOT NULL	VD: 24210104
+ho	varchar(80)	NOT NULL	Họ (VD: Tống Tấn Vĩnh)
+ten	varchar(20)	NOT NULL	Tên (VD: An)
+class_id	bigint unsigned	FK → classes.id
+Lớp học
+academic_year_id	bigint unsigned	FK	Khóa K2024, K2025...
+ 
+Bảng thesis_topics
+Cột	Kiểu dữ liệu	Ràng buộc	Ghi chú
+id	bigint unsigned	PK	
+ten_de_tai_tv	text	NOT NULL	Tên đề tài tiếng Việt
+ten_de_tai_ta	text	NULL	Tên đề tài tiếng Anh
+gvhd_id	bigint unsigned	FK → lecturers.id
+Giảng viên hướng dẫn
+gvpb_id	bigint unsigned	FK → lecturers.id, NULL
+Giảng viên phản biện (gán sau)
+academic_year_id	bigint unsigned	FK	Gắn với khóa học
+status	enum	DEFAULT pending	pending | approved | rejected
+ 
+Bảng file_submissions
+Cột	Kiểu dữ liệu	Ràng buộc	Ghi chú
+id	bigint unsigned	PK	
+group_id	bigint unsigned	FK → thesis_groups.id
+Nhóm nộp file
+phase_id	bigint unsigned	FK → submission_phases.id
+Giai đoạn nộp
+file_type	enum	NOT NULL	word | pdf | ppt | other
+file_path	varchar(500)	NOT NULL	Đường dẫn file trên server
+original_name	varchar(255)	NOT NULL	Tên file gốc khi upload
+status	enum	DEFAULT pending	pending | approved | rejected
+approved_by	bigint unsigned	FK → users.id, NULL
+Admin hoặc GVHD duyệt
+approved_at	timestamp	NULL	Thời điểm duyệt
+note	text	NULL	Ghi chú khi duyệt/từ chối
+ 
+4. USE CASE CHI TIẾT
+4.1 Module Admin
+UC-A01: Import danh sách sinh viên (Mẫu 1)
+Thuộc tính	Nội dung
+Actor	Admin
+Mô tả	Import file Excel Mẫu 1 để tạo danh sách SV và tài khoản tự động
+Điều kiện tiên quyết	Admin đã đăng nhập, file Excel đúng cấu trúc Mẫu 1
+Luồng chính	1. Admin chọn khóa học → 2. Upload file Excel → 3. Hệ thống validate → 4. Tạo bản ghi students + users → 5. Hiển thị kết quả
+
+Luồng ngoại lệ	File sai cấu trúc → báo lỗi. MSSV đã tồn tại → bỏ qua / cập nhật (có option chọn)
+Output	Danh sách SV được tạo + tài khoản mặc định (MSSV = username, password = MSSV hoặc ngày sinh)
+ 
+UC-A02: Import danh sách đề tài do SV đã đăng ký (Mẫu 2)
+Thuộc tính	Nội dung
+Actor	Admin
+Mô tả	SV tự nhập thông tin đề tài trực tiếp trên hệ thống web (tên đề tài TV, TA, GVHD). Admin xem lại và import/cập nhật vào hệ thống từ file tổng hợp Mẫu 2. Nếu SV nhập sai chính tả, chỉ Admin có quyền sửa.
+Cấu trúc Mẫu 2	STT | Thông tin SV (MSSV_Họ Tên SV1 - SV2) | GVHD | Tên đề tài TV | Tên đề tài TA | Đơn đăng ký (link) | Đề cương word (link) | Đề cương pdf (link)
+Luồng chính
+1. SV đăng nhập → nhập tên đề tài TV, TA → chọn GVHD → submit. 2. Admin xem danh sách đề tài SV đã nhập → import/xác nhận vào hệ thống từ Mẫu 2. 3. Nếu SV nhập sai chính tả: Admin vào sửa tên đề tài → lưu lại. Hoặc có thể tải lên hệ thống đúng theo mẫu 2
+Output	Danh sách đề tài hiển thị trên hệ thống. Có thể xuất lại Mẫu 2.
+ 
+UC-A03: Xem báo cáo & Xuất dữ liệu
+Chức năng	Mô tả
+Báo cáo Mẫu 3	Ai đã có / chưa có đề tài. Nhóm 2 SV hiển thị thành 2 dòng riêng biệt. Lọc theo khóa học, lớp.
+Xuất Mẫu 4	Danh sách đầy đủ xuất về PĐT. Mỗi SV 1 dòng riêng. Gồm: STT, MSSV, Họ, Tên, Tên đề tài TV, TA, GVHD, CBPB, Nhận xét CBPB.
+Xuất Mẫu 2	Xuất lại danh sách đăng ký đề tài theo định dạng Mẫu 2 (có header tím, tiêu đề học kỳ)
+ 
+UC-A04: Duyệt file sinh viên
+Giai đoạn	Người duyệt	Hành động
+Đầu kỳ	Admin	Duyệt đơn đăng ký và đề cương. Có thể Approve / Reject kèm ghi chú.
+Giữa kỳ	Admin	Duyệt bản chỉnh sửa khi Admin yêu cầu. Chỉ mở khi Admin cho phép.
+Cuối kỳ	Admin + GVHD	Duyệt báo cáo trước và sau bảo vệ. Cả Admin và GVHD đều duyệt (sequential hoặc parallel).
+ 
+4.2 Module Giảng viên (GVHD / GVPB)
+UC	Mô tả
+GV-01	Đăng nhập bằng tài khoản do Admin cấp
+GV-02	Xem danh sách nhóm SV được phân công hướng dẫn. KHÔNG xem được nhóm của GV khác.
+GV-03	Duyệt file SV nộp ở giai đoạn cuối kỳ (trước và sau bảo vệ): Approve / Reject + ghi chú
+GV-04	Xem thông tin đề tài của các nhóm mình phụ trách
+GV-05 (GVPB)	Nhập nhận xét phản biện cho nhóm được giao. Nhận xét này được xuất theo Mẫu 4.
+ 
+4.3 Module Sinh viên
+UC	Mô tả
+SV-01	Đăng nhập bằng MSSV + mật khẩu (mật khẩu do Admin tạo từ Mẫu 1, SV có thể đổi sau)
+SV-02	Nhập thông tin đề tài: tên đề tài tiếng Việt, tên đề tài tiếng Anh, chọn GVHD từ danh sách
+SV-03	Xem & kiểm tra thông tin đề tài: tên thành viên nhóm, tên đề tài TV và TA đã đúng chưa
+SV-04	Nộp file Đầu kỳ: đơn đăng ký ĐATN + đề cương (Word/PDF)
+SV-05	Nộp file Giữa kỳ: bản chỉnh sửa (khi Admin yêu cầu chỉnh sửa)
+SV-06	Nộp file Cuối kỳ: báo cáo trước bảo vệ + báo cáo sau bảo vệ
+SV-07	Xem trạng thái duyệt file của từng giai đoạn (Chờ duyệt / Đã duyệt / Từ chối + lý do)
+SV-08	Xem nhận xét của GVPB sau khi giảng viên đã nhập
+SV-09	Xem thông tin GVHD và GVPB phụ trách nhóm mình
+ 
+5. QUY TRÌNH NỘP FILE & DUYỆT CHI TIẾT
+5.1 Ba giai đoạn nộp file
+Giai đoạn	Mô tả	Loại file	Người duyệt	Ghi chú
+(1) Đầu kỳ	Nộp đơn đăng ký ĐATN và đề cương	Word, PDF, PPT	Admin	Mở ngay đầu kỳ
+(2) Giữa kỳ	Nộp bản chỉnh sửa khi Admin yêu cầu	Word, PDF, PPT	Admin	Chỉ mở khi có yêu cầu
+(3) Cuối kỳ — Trước bảo vệ	Nộp báo cáo hoàn chỉnh trước khi bảo vệ	Word, PDF, PPT	Admin + GVHD	
+(3) Cuối kỳ — Sau bảo vệ	Nộp báo cáo đã chỉnh sửa sau bảo vệ	Word, PDF, PPT	Admin + GVHD	
+ 
+5.2 Trạng thái file
+•	pending: Đã nộp, chờ duyệt
+•	approved: Đã được duyệt
+•	rejected: Bị từ chối — kèm lý do. SV có thể nộp lại.
+•	re_submitted: Đã nộp lại sau khi bị từ chối
+ 
+6. CẤU TRÚC CÁC MẪU EXCEL
+6.1 Mẫu 1 — Import danh sách sinh viên
+Dùng để: nhập danh sách SV và tạo tài khoản hàng loạt.
+Cột	Tên cột	Tên DB	Kiểu	Bắt buộc	Ghi chú
+A	STT	—	number	Không	Bỏ qua khi import
+B	MSSV	mssv	varchar	Có	Dùng làm username
+C	Họ	ho	varchar	Có	VD: Tống Tấn Vĩnh
+D	Tên	ten	varchar	Có	VD: An
+E	Ghi chú	note	text	Không	Tuỳ chọn
+ 
+Header file: Dòng 1-4 là thông tin trường (TRƯỜNG ĐH CNTT, TRUNG TÂM PTCNTT, năm học, mã lớp). Dữ liệu bắt đầu từ dòng 11.
+ 
+6.2 Mẫu 2 — Import đề tài do SV đăng ký / Xuất danh sách đăng ký
+Dùng để: Admin import đề tài SV đã tự nhập trên hệ thống; xuất danh sách đăng ký. Header tím đậm.
+Cột	STT	Tên cột	DB tương ứng	Ghi chú
+A	1	STT	—	
+B	2	Thông tin sinh viên	thesis_group_members	MSSV_Họ Tên SV1 - MSSV_Họ Tên SV2
+C	3	Giảng viên hướng dẫn	lecturers (gvhd_id)	VD: ThS. Mai Xuân Hùng
+D	4	Tên đề tài (Tiếng Việt)	thesis_topics.ten_de_tai_tv	
+E	5	Tên đề tài (Tiếng Anh)	thesis_topics.ten_de_tai_ta	
+F	6	Đơn đăng ký ĐATN	file_submissions (link)	Link Google Drive
+G	7	Đề cương ĐATN (Word)	file_submissions (link)	Link Google Drive
+H	8	Đề cương ĐATN (PDF)	file_submissions (link)	Link Google Drive
+ 
+6.3 Mẫu 3 — Báo cáo có / chưa có đề tài
+Giống Mẫu 2 về cấu trúc cột. Điểm khác biệt:
+•	Nhóm 2 SV → hiển thị thành 2 dòng riêng biệt (mỗi dòng là 1 SV)
+•	Có cột trạng thái: đã có đề tài / chưa có đề tài
+•	Admin dùng để kiểm soát ai chưa đăng ký đề tài
+ 
+6.4 Mẫu 4 — Xuất về Phòng Đào Tạo
+Dùng để: nộp danh sách SV hoàn chỉnh về PĐT. Mỗi SV 1 dòng riêng.
+Cột	STT	Tên cột	DB tương ứng	Ghi chú
+A	1	STT	—	
+B	2	MSSV	students.mssv	
+C	3	Họ sinh viên	students.ho	
+D	4	Tên sinh viên	students.ten	
+E	5	Tên đề tài (Tiếng Việt)	thesis_topics.ten_de_tai_tv	
+F	6	Tên đề tài (Tiếng Anh)	thesis_topics.ten_de_tai_ta	
+G	7	Họ tên cán bộ hướng dẫn	lecturers.full_name (GVHD)	
+H	8	Cán bộ phản biện	lecturers.full_name (GVPB)	
+I	9	Nhận xét của Cán bộ phản biện	reviews.content (GVPB)	Nhập từ module GVPB
+ 
+7. CẤU TRÚC DỰ ÁN LARAVEL
+7.1 Các Route chính
+Method	URL	Controller	Mô tả
+POST	/login	AuthController	Đăng nhập tất cả Actor
+POST	/logout	AuthController	Đăng xuất
+GET	/admin/students	Admin\StudentController	Danh sách sinh viên
+POST	/admin/students/import	Admin\StudentController	Import SV từ Excel Mẫu 1
+POST	/admin/students/create-accounts	Admin\StudentController	Tạo tài khoản hàng loạt
+GET	/admin/topics	Admin\TopicController	Danh sách đề tài
+POST	/admin/topics/import	Admin\TopicController	Import đề tài từ Excel Mẫu 2
+PUT	/admin/topics/{id}	Admin\TopicController	Sửa tên đề tài (khi SV nhập sai)
+GET	/admin/export/mau2	Admin\ExportController	Xuất Mẫu 2 (DS đăng ký)
+GET	/admin/export/mau3	Admin\ExportController	Xuất Mẫu 3 (báo cáo)
+GET	/admin/export/mau4	Admin\ExportController	Xuất Mẫu 4 (về PĐT)
+GET	/admin/submissions	Admin\SubmissionController	Danh sách file chờ duyệt
+PUT	/admin/submissions/{id}/approve	Admin\SubmissionController	Duyệt file
+PUT	/admin/submissions/{id}/reject	Admin\SubmissionController	Từ chối file
+GET	/lecturer/groups	Lecturer\GroupController	Nhóm SV phụ trách
+PUT	/lecturer/submissions/{id}	Lecturer\SubmissionController	Duyệt file cuối kỳ
+POST	/lecturer/reviews	Lecturer\ReviewController	Nhập nhận xét phản biện
+GET	/student/dashboard	Student\DashboardController	Trang chủ SV
+POST	/student/topic	Student\TopicController	SV nhập tên đề tài TV, TA và chọn GVHD	Student\DashboardController	Trang chủ SV
+POST	/student/submissions	Student\SubmissionController	Nộp file
+GET	/student/submissions	Student\SubmissionController	Xem trạng thái file đã nộp
+ 
+7.2 Cấu trúc thư mục
+Cấu trúc thư mục Laravel chuẩn, phân chia theo module:
+•	app/Models/ — Student, Lecturer, ThesisTopic, ThesisGroup, FileSubmission, Review, SubmissionPhase, AcademicYear
+•	app/Http/Controllers/Admin/ — StudentController, TopicController, ExportController, SubmissionController, LecturerController
+•	app/Http/Controllers/Lecturer/ — GroupController, SubmissionController, ReviewController
+•	app/Http/Controllers/Student/ — DashboardController, TopicController, SubmissionController
+•	app/Imports/ — StudentImport (Mẫu 1), TopicImport (Mẫu 2) — dùng Laravel Excel
+•	app/Exports/ — Mau2Export, Mau3Export, Mau4Export — dùng Laravel Excel
+•	database/migrations/ — Tất cả các bảng đã thiết kế ở Mục 3
+•	resources/views/ — Blade templates phân theo admin/, lecturer/, student/
+ 
+8. YÊU CẦU PHI CHỨC NĂNG & LƯU Ý
+8.1 Bảo mật
+•	Phân quyền bằng Laravel Gates / Policies theo role (admin, gvhd, gvpb, student)
+•	Mỗi GV chỉ truy cập được dữ liệu nhóm mình phụ trách (Row-level security)
+•	Mật khẩu được hash bằng Bcrypt (Laravel mặc định)
+•	CSRF protection cho tất cả form (Laravel mặc định)
+•	Validate file upload: chỉ cho phép Word (.docx), PDF (.pdf), PowerPoint (.pptx), giới hạn dung lượng
+ 
+8.2 Hiệu năng & Khả năng mở rộng
+•	Hỗ trợ đa khóa học: thêm academic_year_id vào tất cả bảng liên quan
+•	Index database trên các cột tìm kiếm thường xuyên: mssv, academic_year_id, group_id, status
+•	Sử dụng Eager Loading (with()) để tránh N+1 query
+•	Export Excel dùng chunk processing với Laravel Excel (Maatwebsite) khi dữ liệu lớn
+ 
+8.3 Ghi chú triển khai
+•	(Làm sau - chưa gấp): Cập nhật danh sách hội đồng bảo vệ
+•	(Tương lai): SV đã tự nhập đề tài trực tiếp trên hệ thống web. Admin import tổng hợp và kiểm duyệt.
+•	Khuyến nghị): Dùng Maatwebsite/Laravel-Excel cho import/export. Dùng Spatie/Laravel-Permission cho phân quyền.
+•	File upload lưu trên server hoặc tích hợp Google Drive. Link GG Drive lưu trong DB dưới dạng text.
+ 
+8.4 Thứ tự ưu tiên phát triển
+1.	Sprint 1: Auth + phân quyền 3 role + quản lý SV (Import Mẫu 1, tạo tài khoản)
+2.	Sprint 2: Module SV nhập đề tài (tên TV, TA, chọn GVHD). Admin import Mẫu 2, sửa tên đề tài sai chính tả, gán GVHD
+3.	Sprint 3: Module SV — xem đề tài, nộp file 3 giai đoạn
+4.	Sprint 4: Module Admin — duyệt file Đầu kỳ + Giữa kỳ. Module GVHD — duyệt file Cuối kỳ
+5.	Sprint 5: Xuất báo cáo Mẫu 3 + Mẫu 4. Nhập nhận xét GVPB
+6.	Sprint 6: Gán GVPB, quản lý khóa học, quản lý tài khoản GV, kiểm thử toàn hệ thống
+7.	Sprint 7+: Hội đồng bảo vệ (sau)
+— Hết tài liệu —

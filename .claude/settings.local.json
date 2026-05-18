@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(php -v)",
-      "Bash(composer --version)"
+      "Bash(composer --version)",
+      "Bash(composer create-project *)",
+      "Bash(mv temp-laravel/* .)",
+      "Bash(mv temp-laravel/.* .)",
+      "Bash(mysql -u root -e \"CREATE DATABASE IF NOT EXISTS quanly_doan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\")",
+      "Bash(/d/xampp/mysql/bin/mysql.exe -u root -e \"CREATE DATABASE IF NOT EXISTS quanly_doan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\")",
+      "Bash(php artisan *)",
+      "Bash(/d/xampp/mysql/bin/mysql.exe -u root -e \"SHOW DATABASES LIKE 'quanly_doan';\")",
+      "Bash(php -r ' *)",
+      "Bash(composer require *)",
+      "Bash(composer show *)",
+      "Bash(composer remove *)",
+      "Bash(npm install *)"
     ]
   }
 }

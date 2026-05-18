@@ -1,0 +1,6 @@
+/* Import Filament's theme */
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+/* Add source for custom content scanning */
+@source '../../../../app/Filament/**/*.php';
+@source '../../../../resources/views/**/*.blade.php';

@@ -1,6 +1,6 @@
 {
   "env": {
-  "ANTHROPIC_AUTH_TOKEN": "09e49bd3f1074cb5a7628d8d33cd082d.9fsRsne3nkXsUZunsYyG24cg",    
+  "ANTHROPIC_AUTH_TOKEN": "5032aadbd95d49ac9d6bc5ee92c4cba9.VQcKpWGeuVR4_n8q1lgCSpxP",    
   "ANTHROPIC_BASE_URL": "https://ollama.com",
   "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-5.1:cloud",    
   "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k2.6:cloud",
