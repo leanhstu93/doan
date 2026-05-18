@@ -3,10 +3,13 @@
 namespace App\Filament\Resources\Students\Tables;
 
 use App\Exports\StudentsWithTopicExport;
+use App\Models\AcademicYear;
+use App\Models\Classes;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Maatwebsite\Excel\Facades\Excel;
@@ -88,19 +91,46 @@ class StudentsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-                Action::make('exportWithTopic')
-                    ->label('Xuất Mẫu 3: SV có đề tài')
+                Action::make('exportTopicReport')
+                    ->label('Xuất báo cáo SV có/chưa có đề tài')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
-                    ->action(function () {
-                        return Excel::download(new StudentsWithTopicExport(true), 'mau_3_sv_co_de_tai.xlsx');
-                    }),
-                Action::make('exportWithoutTopic')
-                    ->label('Xuất Mẫu 3: SV chưa có đề tài')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('warning')
-                    ->action(function () {
-                        return Excel::download(new StudentsWithTopicExport(false), 'mau_3_sv_chua_co_de_tai.xlsx');
+                    ->form([
+                        Select::make('academic_year_id')
+                            ->label('Khóa học')
+                            ->options(fn (): array => AcademicYear::query()
+                                ->orderByDesc('start_year')
+                                ->pluck('name', 'id')
+                                ->all())
+                            ->searchable()
+                            ->preload(),
+                        Select::make('class_id')
+                            ->label('Lớp')
+                            ->options(fn (): array => Classes::query()
+                                ->orderBy('class_name')
+                                ->pluck('class_name', 'id')
+                                ->all())
+                            ->searchable()
+                            ->preload(),
+                        Select::make('topic_status')
+                            ->label('Trạng thái đề tài')
+                            ->options([
+                                'all' => 'Tất cả',
+                                'with_topic' => 'Đã có đề tài',
+                                'without_topic' => 'Chưa có đề tài',
+                            ])
+                            ->default('all')
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $academicYearId = filled($data['academic_year_id'] ?? null) ? (int) $data['academic_year_id'] : null;
+                        $classId = filled($data['class_id'] ?? null) ? (int) $data['class_id'] : null;
+                        $topicStatus = $data['topic_status'] ?? 'all';
+
+                        return Excel::download(
+                            new StudentsWithTopicExport($academicYearId, $classId, $topicStatus),
+                            'mau_3_bao_cao_sinh_vien_de_tai.xlsx',
+                        );
                     }),
             ]);
     }
