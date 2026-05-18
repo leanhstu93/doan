@@ -7,7 +7,6 @@ use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Actions;
 use Filament\Forms;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 
@@ -19,7 +18,7 @@ class GroupFileSubmissions extends Component implements Tables\Contracts\HasTabl
 
     public $topic_id = null;
 
-    public function mount($topic_id = null, ?Model $record = null): void
+    public function mount($topic_id = null, $record = null): void
     {
         if (is_numeric($topic_id)) {
             $this->topic_id = (int) $topic_id;
@@ -95,7 +94,7 @@ class GroupFileSubmissions extends Component implements Tables\Contracts\HasTabl
                 ->label('Duyệt')
                 ->icon('heroicon-o-check')
                 ->color('success')
-                ->visible(fn (FileSubmission $record) => $record->status === 'pending')
+                ->visible(fn (FileSubmission $record) => in_array($record->status, ['pending', 're_submitted', 'rejected'], true))
                 ->requiresConfirmation()
                 ->modalHeading('Duyệt file')
                 ->modalDescription('Bạn có chắc muốn duyệt file này?')
@@ -104,6 +103,7 @@ class GroupFileSubmissions extends Component implements Tables\Contracts\HasTabl
                         'status' => 'approved',
                         'approved_by' => auth()->id(),
                         'approved_at' => now(),
+                        'rejection_reason' => null,
                     ]);
                 }),
 
@@ -111,7 +111,7 @@ class GroupFileSubmissions extends Component implements Tables\Contracts\HasTabl
                 ->label('Từ chối')
                 ->icon('heroicon-o-x-mark')
                 ->color('danger')
-                ->visible(fn (FileSubmission $record) => $record->status === 'pending')
+                ->visible(fn (FileSubmission $record) => in_array($record->status, ['pending', 're_submitted', 'approved'], true))
                 ->form([
                     \Filament\Forms\Components\Textarea::make('rejection_reason')
                         ->label('Lý do từ chối')
@@ -120,6 +120,8 @@ class GroupFileSubmissions extends Component implements Tables\Contracts\HasTabl
                 ->action(function (FileSubmission $record, array $data) {
                     $record->update([
                         'status' => 'rejected',
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now(),
                         'rejection_reason' => $data['rejection_reason'],
                     ]);
                 }),

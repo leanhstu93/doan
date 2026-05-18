@@ -3,8 +3,10 @@
 namespace App\Filament\Lecturer\Resources\RelationManagers;
 
 use App\Models\FileSubmission;
+use App\Models\Lecturer;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -56,8 +58,11 @@ class FileSubmissionsRelationManager extends RelationManager
                 TextEntry::make('created_at')
                     ->label('Ngày nộp')
                     ->dateTime('d/m/Y H:i'),
+                TextEntry::make('approvedBy.full_name')
+                    ->label('Người xử lý')
+                    ->placeholder('-'),
                 TextEntry::make('approved_at')
-                    ->label('Ngày duyệt')
+                    ->label('Ngày xử lý')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('-'),
                 TextEntry::make('note')
@@ -74,7 +79,7 @@ class FileSubmissionsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->with(['phase', 'submittedBy']))
+            ->modifyQueryUsing(fn ($query) => $query->with(['phase', 'submittedBy', 'topic']))
             ->columns([
                 Tables\Columns\TextColumn::make('phase.name')
                     ->label('Giai đoạn')
@@ -124,6 +129,64 @@ class FileSubmissionsRelationManager extends RelationManager
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
                     ->action(fn (FileSubmission $record) => Storage::disk('local')->download($record->file_path, $record->original_name)),
+                Action::make('approve')
+                    ->label('Duyệt')
+                    ->icon('heroicon-o-check')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (FileSubmission $record): bool => $this->canApproveSubmission($record))
+                    ->action(function (FileSubmission $record): void {
+                        $record->update([
+                            'status' => 'approved',
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now(),
+                            'rejection_reason' => null,
+                        ]);
+                    })
+                    ->successNotificationTitle('Đã duyệt file'),
+                Action::make('reject')
+                    ->label('Từ chối')
+                    ->icon('heroicon-o-x-mark')
+                    ->color('danger')
+                    ->visible(fn (FileSubmission $record): bool => $this->canRejectSubmission($record))
+                    ->form([
+                        Textarea::make('rejection_reason')
+                            ->label('Lý do từ chối')
+                            ->rows(3)
+                            ->required(),
+                    ])
+                    ->action(function (FileSubmission $record, array $data): void {
+                        $record->update([
+                            'status' => 'rejected',
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now(),
+                            'rejection_reason' => $data['rejection_reason'],
+                        ]);
+                    })
+                    ->successNotificationTitle('Đã từ chối file'),
             ]);
+    }
+
+    protected function canApproveSubmission(FileSubmission $record): bool
+    {
+        return $this->canReviewSubmission($record)
+            && in_array($record->status, ['pending', 're_submitted', 'rejected'], true);
+    }
+
+    protected function canRejectSubmission(FileSubmission $record): bool
+    {
+        return $this->canReviewSubmission($record)
+            && in_array($record->status, ['pending', 're_submitted', 'approved'], true);
+    }
+
+    protected function canReviewSubmission(FileSubmission $record): bool
+    {
+        $lecturerId = Lecturer::where('user_id', auth()->id())->value('id');
+
+        if (!$lecturerId) {
+            return false;
+        }
+
+        return $record->topic?->gvhd_id === $lecturerId;
     }
 }
