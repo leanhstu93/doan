@@ -14,9 +14,11 @@ return new class extends Migration
             ->whereNotNull('email')
             ->update(['username' => DB::raw('email')]);
 
-        Schema::table('lecturers', function (Blueprint $table) {
-            $table->dropColumn('lecturer_code');
-        });
+        if (Schema::hasColumn('lecturers', 'lecturer_code')) {
+            Schema::table('lecturers', function (Blueprint $table) {
+                $table->dropColumn('lecturer_code');
+            });
+        }
     }
 
     public function down(): void
