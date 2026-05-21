@@ -15,7 +15,7 @@
           <path d="M22 9l-10 -4l-10 4l10 4l10 -4v6"></path>
           <path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4"></path>
         </svg>
-        <span class="ms-2 fs-3 fw-bold">Đoàn Core</span>
+        <span class="ms-2 fs-3 fw-bold">Quản lý đồ án</span>
       </a>
 
       <div class="collapse navbar-collapse" id="sidebar-menu">
@@ -259,7 +259,7 @@
     <footer class="footer footer-transparent d-print-none">
       <div class="container-xl">
         <div class="text-center text-muted">
-          © 2026 Hệ thống Quản lý Đồ án Tốt nghiệp - Đoàn Core
+          © 2026 Hệ thống Quản lý Đồ án Tốt nghiệp
         </div>
       </div>
     </footer>

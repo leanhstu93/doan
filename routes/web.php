@@ -5,12 +5,12 @@ use App\Http\Controllers\Auth\AuthController;
 
 // Public routes
 Route::get('/', function () {
-    return redirect('/login');
+    return view('home');
 });
 
 // Auth routes
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::get('/login', fn () => abort(404))->name('login');
+Route::post('/login', fn () => abort(404))->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Lecturer routes
