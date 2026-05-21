@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Models\SubmissionPhase;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -137,11 +138,33 @@ class SubmissionPhaseResource extends Resource
             ->defaultSort('sort_order')
             ->actions([
                 EditAction::make(),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->before(function (DeleteAction $action, SubmissionPhase $record): void {
+                        if ($record->fileSubmissions()->exists()) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Không thể xóa giai đoạn')
+                                ->body('Giai đoạn này đã có file sinh viên nộp. Vui lòng giữ lại để bảo toàn dữ liệu.')
+                                ->send();
+
+                            $action->cancel();
+                        }
+                    }),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->before(function (DeleteBulkAction $action, $records): void {
+                            if ($records->contains(fn (SubmissionPhase $record): bool => $record->fileSubmissions()->exists())) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Không thể xóa giai đoạn')
+                                    ->body('Một hoặc nhiều giai đoạn đã có file sinh viên nộp. Vui lòng giữ lại để bảo toàn dữ liệu.')
+                                    ->send();
+
+                                $action->cancel();
+                            }
+                        }),
                 ]),
             ]);
     }

@@ -15,6 +15,18 @@ class Lecturer extends Model
         'department',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Lecturer $lecturer): void {
+            ThesisTopic::where('gvhd_id', $lecturer->id)->update(['gvhd_id' => null]);
+            ThesisTopic::where('gvpb_id', $lecturer->id)->update(['gvpb_id' => null]);
+        });
+
+        static::deleted(function (Lecturer $lecturer): void {
+            $lecturer->user?->delete();
+        });
+    }
+
     // Relationships
     public function user()
     {

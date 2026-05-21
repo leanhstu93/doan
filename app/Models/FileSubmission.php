@@ -26,6 +26,15 @@ class FileSubmission extends Model
         'approved_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (FileSubmission $submission): void {
+            if ($submission->file_path && Storage::disk('local')->exists($submission->file_path)) {
+                Storage::disk('local')->delete($submission->file_path);
+            }
+        });
+    }
+
     /**
      * Get the topic that owns this file submission
      */

@@ -5,6 +5,7 @@ namespace App\Filament\Student\Resources\FileSubmissionResource\Pages;
 use App\Filament\Student\Resources\FileSubmissionResource;
 use App\Models\FileSubmission;
 use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\FileUpload;
@@ -20,8 +21,24 @@ class EditFileSubmission extends EditRecord
     public function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->visible(fn (FileSubmission $record): bool => $record->status === 'pending'),
         ];
+    }
+
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        if (!in_array($this->record->status, ['pending', 'rejected'], true)) {
+            Notification::make()
+                ->warning()
+                ->title('Không thể chỉnh sửa file này')
+                ->body('Chỉ có thể chỉnh sửa file đang chờ duyệt hoặc bị từ chối.')
+                ->send();
+
+            $this->redirect($this->getResource()::getUrl('view', ['record' => $this->record]));
+        }
     }
 
     protected function getRedirectUrl(): string
@@ -96,7 +113,10 @@ class EditFileSubmission extends EditRecord
 
             $data['file_path'] = $fullPath;
             $data['original_name'] = $originalName;
-            $data['status'] = 'pending';
+            $data['status'] = $record->status === 'rejected' ? 're_submitted' : 'pending';
+            $data['approved_by'] = null;
+            $data['approved_at'] = null;
+            $data['rejection_reason'] = null;
         }
 
         unset($data['file']);

@@ -42,6 +42,10 @@ class ListFileSubmissions extends ListRecords
                 ->tooltip($this->getCannotCreateMessage());
         }
 
+        if (!FileSubmissionResource::canCreate()) {
+            return $actions;
+        }
+
         $actions[] = \Filament\Actions\CreateAction::make()
             ->label('Nộp file mới')
             ->icon('heroicon-o-plus');

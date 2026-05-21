@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Students\Tables;
 
 use App\Exports\StudentsWithTopicExport;
+use App\Exports\ThesisReportForPDTExport;
 use App\Models\AcademicYear;
 use App\Models\Classes;
 use Filament\Actions\Action;
@@ -130,6 +131,37 @@ class StudentsTable
                         return Excel::download(
                             new StudentsWithTopicExport($academicYearId, $classId, $topicStatus),
                             'mau_3_bao_cao_sinh_vien_de_tai.xlsx',
+                        );
+                    }),
+                Action::make('exportPdtReport')
+                    ->label('Xuất danh sách nộp PĐT')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('primary')
+                    ->form([
+                        Select::make('academic_year_id')
+                            ->label('Khóa học')
+                            ->options(fn (): array => AcademicYear::query()
+                                ->orderByDesc('start_year')
+                                ->pluck('name', 'id')
+                                ->all())
+                            ->searchable()
+                            ->preload(),
+                        Select::make('class_id')
+                            ->label('Lớp')
+                            ->options(fn (): array => Classes::query()
+                                ->orderBy('class_name')
+                                ->pluck('class_name', 'id')
+                                ->all())
+                            ->searchable()
+                            ->preload(),
+                    ])
+                    ->action(function (array $data) {
+                        $academicYearId = filled($data['academic_year_id'] ?? null) ? (int) $data['academic_year_id'] : null;
+                        $classId = filled($data['class_id'] ?? null) ? (int) $data['class_id'] : null;
+
+                        return Excel::download(
+                            new ThesisReportForPDTExport($academicYearId, $classId),
+                            'mau_4_danh_sach_nop_pdt.xlsx',
                         );
                     }),
             ]);

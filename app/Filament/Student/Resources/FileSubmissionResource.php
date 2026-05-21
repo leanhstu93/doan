@@ -364,6 +364,10 @@ class FileSubmissionResource extends Resource
         }
 
         // Kiểm tra có giai đoạn nộp file đang mở
+        $submittedPhaseIds = FileSubmission::where('topic_id', $group->topic_id)
+            ->pluck('phase_id')
+            ->toArray();
+
         return SubmissionPhase::active()
             ->where(function ($query) {
                 $query->whereNull('open_date')
@@ -373,6 +377,7 @@ class FileSubmissionResource extends Resource
                 $query->whereNull('close_date')
                     ->orWhere('close_date', '>=', now());
             })
+            ->whereNotIn('id', $submittedPhaseIds)
             ->exists();
     }
 }

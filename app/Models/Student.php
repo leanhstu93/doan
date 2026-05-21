@@ -33,6 +33,13 @@ class Student extends Model
         'status',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleted(function (Student $student): void {
+            $student->user?->delete();
+        });
+    }
+
     // Relationships
     public function user()
     {

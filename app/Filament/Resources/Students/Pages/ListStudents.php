@@ -10,8 +10,11 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class ListStudents extends ListRecords
 {
@@ -47,14 +50,55 @@ class ListStudents extends ListRecords
                             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                             'application/vnd.ms-excel',
                         ])
-                        ->helperText('File Excel với cột B: MSSV, C: Họ, D: Tên'),
+                        ->helperText('File Excel Mẫu 1: dữ liệu bắt đầu từ dòng 11, cột B: MSSV, C: Họ, D: Tên'),
                 ])
                 ->action(function (array $data): void {
                     $file = $data['file'];
                     $import = new StudentsImport($data['class_id'], $data['academic_year_id']);
-                    Excel::import($import, $file);
+
+                    try {
+                        Excel::import($import, $file);
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('Import thất bại')
+                            ->body(collect($exception->errors())->flatten()->implode("\n"))
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    } catch (Throwable $exception) {
+                        report($exception);
+
+                        Notification::make()
+                            ->title('Import thất bại')
+                            ->body($exception->getMessage() ?: 'Không thể import file. Vui lòng kiểm tra lại định dạng file Excel.')
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
+                    $body = sprintf(
+                        'Tạo mới %d sinh viên. Bỏ qua %d dòng trống. Bỏ qua %d MSSV/tài khoản đã tồn tại.',
+                        $import->importedCount(),
+                        $import->skippedBlankCount(),
+                        $import->skippedExistingCount(),
+                    );
+
+                    if ($import->skippedExistingCount() > 0) {
+                        $body .= "\nMSSV đã tồn tại: " . implode(', ', array_slice($import->skippedExistingMssv(), 0, 10));
+                        $body .= count($import->skippedExistingMssv()) > 10 ? ', ...' : '';
+                    }
+
+                    Notification::make()
+                        ->title('Import sinh viên hoàn tất')
+                        ->body($body)
+                        ->success()
+                        ->send();
                 })
-                ->successNotificationTitle('Import thành công!'),
+                ->successNotification(null),
             CreateAction::make()
                 ->label('Thêm sinh viên'),
         ];

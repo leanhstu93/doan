@@ -20,6 +20,14 @@ class ThesisTopic extends Model
         'status',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (ThesisTopic $topic): void {
+            $topic->fileSubmissions()->get()->each->delete();
+            $topic->group()->update(['topic_id' => null]);
+        });
+    }
+
     // Relationships
     public function gvhd()
     {
